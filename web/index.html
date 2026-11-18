@@ -139,7 +139,7 @@
     <button id="save">결과 이미지 저장</button>
     <button class="ghost" id="retry">다시 하기</button>
   </section>
-  <footer>미리듣기 제공: Apple iTunes · 태그 데이터: Last.fm</footer>
+  <footer>미리듣기 제공: Apple iTunes · 태그 데이터: Last.fm<br>테스트 결과(고른 곡과 유형)는 이름·연락처 없이 익명 통계로만 모읍니다</footer>
 </main>
 
 <script src="data.js"></script>
@@ -185,6 +185,15 @@ function parseFriend() {
 }
 const friend = parseFriend();
 $("friendNote").hidden = !friend;
+
+// 익명 결과 수집 → 구글 시트(apps-script/Code.gs). 로컬에서 열 때는 보내지 않는다
+const LOG_URL = "https://script.google.com/macros/s/AKfycbznibOwhF2Lq_t66kDokFvmeZH9ggTAqgSpLo6wtjuqOIIavHuZURDjfUalNCHKPlhY/exec";
+let sid, t0, skips;
+function send(ev, extra = {}) {
+  if (!LOG_URL || !location.hostname.endsWith("github.io")) return;
+  fetch(LOG_URL, { method: "POST", mode: "no-cors", keepalive: true,
+    body: JSON.stringify({ sid, ev, friend: !!friend, n: T.length, ...extra }) }).catch(() => {});
+}
 
 const WHY = [["더 잔잔한", "더 신나는"], ["덜 알려진", "더 알려진"], ["더 오래된", "더 최근에 나온"]];
 let pool, rounds, current, tiles = [], picks = [], last;
@@ -237,9 +246,11 @@ $("pair").addEventListener("click", e => {
   rounds.push([current[n], current[1 - n]]);
   render();
 });
-$("skip").onclick = render;
+$("skip").onclick = () => { skips++; render(); };
 function start() {
   pool = T.map((_, i) => i); rounds = []; picks = [];
+  sid = Math.random().toString(36).slice(2, 12); t0 = Date.now(); skips = 0;
+  send("start");
   $("intro").hidden = $("result").hidden = $("grid").hidden = true; $("battle").hidden = false;
   render();
 }
@@ -375,6 +386,8 @@ function showResult() {
   $("kin").innerHTML = `<div><small>잘 맞는 유형</small><b>${other([3])}</b><span>끌리는 소리는 같고 듣는 폭이 달라서 서로 새 곡을 알려줄 수 있어요</span></div>
     <div><small>정반대 유형</small><b>${other([0, 1, 2, 3])}</b><span>네 축이 모두 반대예요. 플레이리스트를 바꿔 들으면 가장 낯선 세계가 열려요</span></div>`;
   last = { sc, on, wins, artists };
+  send("done", { type: typeName(sc), sc: sc.map(x => +x.toFixed(3)), rounds, shown: tiles.length, picks, skips,
+    sec: Math.round((Date.now() - t0) / 1000) });
 
   if (friend) {  // ponytail: 궁합 = 취향 벡터 유사도 60% + 축 점수 일치도 40%, 가중치는 임의값
     const fs = score(friend.rounds, friend.frac), sim = Math.max(0, cos(me, centroid([...friend.rounds.map(r => r[0]), ...friend.likes])));

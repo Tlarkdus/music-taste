@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>음악 취향 유형 테스트</title>
+<meta name="description" content="곡 대결 12번으로 알아보는 내 음악 취향 유형">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600;700&family=Noto+Serif+KR:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  /* 레코드 슬리브·공연 포스터 인쇄물 느낌: 종이색 바탕, 먹색 잉크, 주홍 한 가지 강조색, 그라데이션·글로우 없음 */
+  :root { --paper:#f3ecdc; --card:#fbf7ec; --ink:#191713; --dim:#6d665a; --accent:#e5482f; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:"IBM Plex Sans KR","Pretendard","Malgun Gothic",system-ui,sans-serif; line-height:1.55; }
+  main { max-width:640px; margin:0 auto; padding:24px 16px 56px; }
+  h1 { font-family:"Noto Serif KR","Batang",serif; font-weight:900; letter-spacing:-.02em; font-size:1.9rem; line-height:1.25; margin:.2em 0; }
+  h2 { font-size:.8rem; letter-spacing:.14em; font-weight:700; margin:2.4em 0 1em; padding-top:10px; border-top:2px solid var(--ink); }
+  p { color:var(--dim); margin:.5em 0; }
+  .over { font-size:.75rem; letter-spacing:.18em; font-weight:700; color:var(--ink); }
+  .over::before { content:""; display:inline-block; width:.7em; height:.7em; background:var(--accent); margin-right:.6em; }
+  button { font:inherit; color:inherit; cursor:pointer; border:2px solid var(--ink); background:var(--card); border-radius:4px; padding:11px 14px; font-weight:600; }
+  button:focus-visible, a:focus-visible { outline:3px solid var(--ink); outline-offset:3px; }
+  .primary { background:var(--accent); font-weight:700; width:100%; padding:15px; font-size:1.05rem; box-shadow:5px 5px 0 var(--ink); }
+  .primary:active { transform:translate(3px,3px); box-shadow:2px 2px 0 var(--ink); }
+  .ghost { width:100%; margin-top:18px; background:transparent; border-style:dashed; color:var(--dim); }
+  [hidden] { display:none !important; }
+
+  .hero { text-align:center; padding-top:7vh; }
+  .hero h1 { font-size:2.6rem; }
+  .hero .primary { margin-top:28px; }
+  .disc { width:150px; aspect-ratio:1; border-radius:50%; margin:0 auto 30px; border:2px solid var(--ink);
+    background:radial-gradient(circle, var(--paper) 0 4%, var(--accent) 4.5% 31%, transparent 31.5%), repeating-radial-gradient(circle, #191713 0 2px, #2e2a24 2px 4px);
+    animation:spin 9s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .disc { animation:none; } }
+  .friend { background:var(--card); border:2px dashed var(--ink); border-radius:4px; padding:12px; color:var(--ink); margin-top:20px; }
+
+  .progress { height:12px; border:2px solid var(--ink); background:var(--card); margin:10px 0 20px; }
+  .progress i { display:block; height:100%; background:var(--accent); transition:width .25s; }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .song { background:var(--card); border:2px solid var(--ink); border-radius:4px; box-shadow:5px 5px 0 var(--ink); padding:10px; display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .song img { width:100%; aspect-ratio:1; object-fit:cover; border:2px solid var(--ink); background:var(--ink); }
+  .song b, .song span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .song span { color:var(--dim); font-size:.9rem; }
+  .song .pick { background:var(--ink); color:var(--paper); font-weight:700; }
+
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:18px 0 24px; }
+  .tile { display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .tile [data-like] { padding:6px; text-align:left; position:relative; }
+  .tile img { width:100%; aspect-ratio:1; object-fit:cover; display:block; margin-bottom:5px; border:1px solid var(--ink); }
+  .tile b, .tile span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.82rem; }
+  .tile span { color:var(--dim); font-weight:400; }
+  .tile [data-like][aria-pressed="true"] { box-shadow:4px 4px 0 var(--accent); border-color:var(--accent); }
+  .tile [data-like][aria-pressed="true"]::after { content:"♥"; position:absolute; top:12px; right:12px; width:1.7em; height:1.7em; line-height:1.7em; text-align:center; border-radius:50%; background:var(--paper); border:2px solid var(--ink); color:var(--accent); }
+  .tile [data-play] { padding:5px; font-size:.8rem; }
+
+  .type { text-align:center; padding:32px 16px 28px; background:var(--ink); border-radius:4px; box-shadow:6px 6px 0 var(--accent); }
+  .type small { letter-spacing:.18em; font-weight:700; font-size:.72rem; color:var(--accent); }
+  .type h1 { font-size:2.2rem; color:var(--paper); margin:.35em 0; }
+  .type p { color:#cfc7b4; margin:0; }
+  .compat { text-align:center; border:2px solid var(--ink); background:var(--card); border-radius:4px; padding:14px; margin-top:22px; }
+  .compat b { display:block; font-family:"Noto Serif KR",serif; font-size:2.2rem; line-height:1.2; }
+  .compat b::after { content:""; display:block; width:2.2em; height:5px; background:var(--accent); margin:4px auto 0; }
+  .axis { display:grid; grid-template-columns:3.4em 1fr 3.4em; align-items:center; gap:14px; margin:14px 0; font-size:.95rem; color:var(--dim); }
+  .axis .on { color:var(--ink); font-weight:700; box-shadow:inset 0 -.5em 0 rgba(229,72,47,.4); justify-self:start; }
+  .axis span:last-child.on, .axis span:last-child { justify-self:end; }
+  .axis div { height:2px; background:var(--ink); position:relative; }
+  .axis div i { position:absolute; top:-7px; width:14px; height:14px; margin-left:-7px; background:var(--accent); border:2px solid var(--ink); transform:rotate(45deg); }
+
+  .mapwrap { position:relative; border:2px solid var(--ink); border-radius:4px; box-shadow:6px 6px 0 var(--ink); overflow:hidden; }
+  canvas { display:block; width:100%; aspect-ratio:4/3; touch-action:manipulation; }
+  .tip { position:absolute; transform:translate(-50%,-140%); background:var(--paper); border:2px solid var(--ink); padding:3px 9px; font-size:.8rem; font-weight:600; white-space:nowrap; pointer-events:none; }
+  .mapnote { font-size:.88rem; text-align:center; margin-top:16px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:10px; }
+  .chips span { border:2px solid var(--ink); background:var(--card); border-radius:99px; padding:2px 13px; font-size:.85rem; font-weight:600; }
+
+  .rec { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px dashed var(--ink); }
+  .rec img { width:52px; height:52px; border:2px solid var(--ink); }
+  .rec div { flex:1; min-width:0; }
+  .rec b, .rec span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rec span { color:var(--dim); font-size:.85rem; }
+  .rec a { color:var(--ink); font-size:.8rem; }
+  .rec button { padding:8px 12px; font-size:.85rem; }
+  .why { font-size:.85rem; margin:-6px 0 20px; text-align:center; }
+  .kin { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .kin div { border:2px solid var(--ink); background:var(--card); border-radius:4px; padding:12px; }
+  .kin small { display:block; font-size:.72rem; letter-spacing:.1em; font-weight:700; color:var(--accent); }
+  .kin b { display:block; font-family:"Noto Serif KR",serif; font-size:1.05rem; margin:2px 0; }
+  .kin span { font-size:.8rem; color:var(--dim); }
+  #playAll { width:100%; margin-bottom:6px; background:var(--ink); color:var(--paper); }
+  #save { width:100%; margin-top:14px; }
+  footer { margin-top:36px; font-size:.78rem; color:var(--dim); text-align:center; }
+</style>
+</head>
+<body>
+<main>
+  <section id="intro" class="hero">
+    <div class="disc" aria-hidden="true"></div>
+    <div class="over">MUSIC TASTE TEST</div>
+    <h1>음악 취향<br>유형 테스트</h1>
+    <p>두 곡 중 더 끌리는 쪽을 고르기만 하면 돼요.<br>곡 대결 12번 · 약 3분 · 소리를 켜고 해 주세요</p>
+    <p id="friendNote" class="friend" hidden>친구가 궁합 테스트를 보냈어요. 끝나면 두 사람의 취향 궁합을 알려드려요.</p>
+    <button class="primary" id="start">시작하기</button>
+  </section>
+
+  <section id="battle" hidden>
+    <div class="over" id="count" aria-live="polite"></div>
+    <div class="progress"><i id="bar"></i></div>
+    <div class="pair" id="pair"></div>
+    <button class="ghost" id="skip">둘 다 모르겠어요 · 다른 곡 보기</button>
+  </section>
+
+  <section id="grid" hidden>
+    <div class="over">LAST QUESTION</div>
+    <h1>끌리는 곡을 모두 골라주세요</h1>
+    <p>하나만 골라도, 여러 개를 골라도 괜찮아요. 미리 들어보고 마음이 가는 곡만 눌러 주세요.</p>
+    <div class="grid" id="tiles"></div>
+    <button class="primary" id="done">결과 보기</button>
+  </section>
+
+  <section id="result" hidden>
+    <div class="type"><small>YOUR MUSIC TASTE TYPE</small><h1 id="typeName"></h1><p id="typeDesc"></p></div>
+    <div class="compat" id="compat" hidden></div>
+    <h2>취향 축</h2><div id="axes"></div>
+    <h2>나의 취향 별자리</h2>
+    <div class="mapwrap">
+      <canvas id="map" role="img" aria-label="장르별 구역이 표시된 음악 성도 위에 내가 고른 곡들을 별자리로 이은 지도"></canvas>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+    <p class="mapnote">음악 성도 위에 내가 고른 곡들을 이은 별자리예요. 별을 누르면 곡 이름이 보여요.</p>
+    <div class="chips" id="zone"></div>
+    <h2>닮은 아티스트</h2><div class="chips" id="artists"></div>
+    <h2>유형 궁합</h2><div class="kin" id="kin"></div>
+    <h2>취향 플레이리스트 20곡</h2>
+    <button id="playAll">▶ 처음부터 이어 듣기</button>
+    <div id="recs"></div>
+    <button class="primary" id="share" style="margin-top:28px">친구에게 보내고 궁합 보기</button>
+    <button id="save">결과 이미지 저장</button>
+    <button class="ghost" id="retry">다시 하기</button>
+  </section>
+  <footer>미리듣기 제공: Apple iTunes · 태그 데이터: Last.fm</footer>
+</main>
+
+<script src="data.js"></script>
+<script>
+const T = DATA.tracks, ROUNDS = 12, $ = id => document.getElementById(id);
+const AXES = [["잔잔", "신남"], ["디깅", "대중"], ["올드", "최신"], ["깊게", "넓게"]];
+const ADJ = [["LP 감성", "레트로 파티"], ["새벽 감성", "페스티벌"]];            // [최신?][신남?]
+const NOUN = [["컬렉터", "탐험가"], ["애호가", "큐레이터"]];                    // [대중?][넓게?]
+const DESC = [["오래 들어도 질리지 않는 잔잔한 옛 곡", "몸이 먼저 반응하는 그 시절 신나는 곡"],
+              ["조용히 스며드는 요즘 곡", "지금 가장 뜨거운 신나는 곡"]];
+const NDESC = [["아는 사람만 아는 한 세계를 깊이 모으는", "장르의 경계를 넘어 숨은 곡을 찾아다니는"],
+               ["사랑받는 곡들 속에서 내 결을 깊이 파고드는", "장르를 넘나들며 좋은 곡을 골라 듣는"]];
+
+const dot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
+const clamp = x => Math.max(0, Math.min(1, x));
+const mean = xs => xs.reduce((s, x) => s + x, 0) / xs.length;
+const centroid = ids => T[0].v.map((_, k) => mean(ids.map(i => T[i].v[k])));
+const cos = (a, b) => dot(a, b) / Math.sqrt(dot(a, a) * dot(b, b));
+
+// rounds: [[이긴 곡, 진 곡], ...], frac: 장르별 한 곡씩 보여준 타일 중 고른 비율 → [신남, 대중, 최신, 넓게] 각 0~1
+// 폭은 양자택일로는 측정이 안 돼서(시뮬레이션에서 구분 불가) 마지막의 '모두 고르기' 질문으로 따로 잼
+function score(rounds, frac) {
+  const s = [0, 1, 2].map(k => clamp(0.5 + mean(rounds.map(([w, l]) => T[w].ax[k] - T[l].ax[k]))));
+  // ponytail: '넓게' 기준(장르의 40% 이상 선택)은 감으로 잡은 값 — 실사용 로그가 쌓이면 분포의 중앙값으로 보정
+  return [...s, clamp(frac / 0.8)];
+}
+const bits = sc => sc.map(x => +(x >= 0.5));
+const typeName = sc => { const [e, p, y, w] = bits(sc); return ADJ[y][e] + " " + NOUN[p][w]; };
+const typeDesc = sc => { const [e, p, y, w] = bits(sc); return `${NDESC[p][w]} 타입. ${DESC[y][e]}에 끌려요.`; };
+console.assert(typeName([1, 1, 1, 1]) === "페스티벌 큐레이터" && typeName([0, 0, 0, 0]) === "LP 감성 컬렉터", "유형 이름 매핑 오류");
+console.assert(score([[0, 1]], 0.2)[3] < 0.5 && score([[0, 1]], 0.5)[3] >= 0.5, "폭 축 기준 오류");
+
+// 친구 결과: ?f=이긴곡-진곡.이긴곡-진곡...~보여준타일수~고른곡.고른곡  (외부 입력이므로 범위 검증)
+// ponytail: 곡 인덱스를 그대로 담아 data.js가 바뀌면 옛 링크가 어긋남 — 문제가 되면 match_key 해시로 교체
+function parseFriend() {
+  const f = new URLSearchParams(location.search).get("f");
+  if (!f) return null;
+  const [rs, n, ps = ""] = f.split("~"), shown = Number(n), ok = i => Number.isInteger(i) && i >= 0 && i < T.length;
+  const r = rs.split(".").map(p => p.split("-").map(Number)), likes = ps ? ps.split(".").map(Number) : [];
+  return r.length >= 3 && r.length <= 30 && r.every(p => p.length === 2 && p.every(ok) && p[0] !== p[1])
+    && Number.isInteger(shown) && shown >= 1 && shown <= 30 && likes.length <= shown && likes.every(ok)
+    ? { rounds: r, frac: likes.length / shown, likes } : null;
+}
+const friend = parseFriend();
+$("friendNote").hidden = !friend;
+
+const WHY = [["더 잔잔한", "더 신나는"], ["덜 알려진", "더 알려진"], ["더 오래된", "더 최근에 나온"]];
+let pool, rounds, current, tiles = [], picks = [], last;
+const audio = new Audio();
+let queue = [];  // 이어 듣기 대기열 (미리듣기 버튼들). 직접 곡을 누르면 비움
+audio.addEventListener("ended", () => queue.length ? toggle(queue.shift()) : setPlaying(null));
+function setPlaying(btn) {
+  document.querySelectorAll("[data-play]").forEach(b => { b.textContent = "▶ 미리듣기"; b.setAttribute("aria-pressed", "false"); });
+  if (btn) { btn.textContent = "■ 정지"; btn.setAttribute("aria-pressed", "true"); }
+}
+function toggle(btn) {
+  const url = T[+btn.dataset.play].p;
+  if (!audio.paused && audio.src === url) { audio.pause(); return setPlaying(null); }
+  audio.src = url; audio.play().catch(() => setPlaying(null)); setPlaying(btn);
+}
+document.addEventListener("click", e => { const b = e.target.closest("[data-play]"); if (b) { queue = []; toggle(b); } });
+
+// ponytail: 무작위 40쌍 중 '소리는 비슷한데 목표 축에서 가장 다른' 쌍을 고르는 단순 휴리스틱 — 정보이득 기반 적응형 출제로 올릴 수 있음
+function nextPair() {
+  const axis = rounds.length % 3;
+  let best, bestScore = -Infinity;
+  for (let n = 0; n < 40; n++) {
+    const a = pool[Math.random() * pool.length | 0], b = pool[Math.random() * pool.length | 0];
+    if (a === b) continue;
+    const sc = Math.abs(T[a].ax[axis] - T[b].ax[axis]) + dot(T[a].v, T[b].v);
+    if (sc > bestScore) { bestScore = sc; best = [a, b]; }
+  }
+  pool = pool.filter(i => !best.includes(i));
+  return best;
+}
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function render() {
+  audio.pause();
+  if (rounds.length >= ROUNDS || pool.length < 2) return showGrid();
+  current = nextPair();
+  $("count").textContent = `ROUND ${rounds.length + 1} / ${ROUNDS}`;
+  $("bar").style.width = rounds.length / ROUNDS * 100 + "%";
+  $("pair").innerHTML = current.map((i, n) => `
+    <div class="song">
+      <img src="${esc(T[i].img)}" alt="${esc(T[i].t)} 앨범 표지">
+      <div><b>${esc(T[i].t)}</b><span>${esc(T[i].a)} · ${T[i].yr}</span></div>
+      <button data-play="${i}" aria-pressed="false">▶ 미리듣기</button>
+      <button class="pick" data-pick="${n}">이 곡이 더 좋아요</button>
+    </div>`).join("");
+}
+$("pair").addEventListener("click", e => {
+  const b = e.target.closest("[data-pick]");
+  if (!b) return;
+  const n = +b.dataset.pick;
+  rounds.push([current[n], current[1 - n]]);
+  render();
+});
+$("skip").onclick = render;
+function start() {
+  pool = T.map((_, i) => i); rounds = []; picks = [];
+  $("intro").hidden = $("result").hidden = $("grid").hidden = true; $("battle").hidden = false;
+  render();
+}
+
+// 폭 측정: 장르(클러스터)마다 아직 안 나온 곡 중 잘 알려진 곡 하나씩 보여주고 끌리는 곡을 모두 고르게 함
+function showGrid() {
+  $("battle").hidden = true; $("grid").hidden = false;
+  tiles = DATA.clusters.map((_, c) => {
+    const top = pool.filter(i => T[i].c === c).sort((a, b) => T[b].ax[1] - T[a].ax[1]).slice(0, 5);
+    return top[Math.random() * top.length | 0];
+  }).filter(i => i !== undefined);
+  $("tiles").innerHTML = tiles.map(i => `
+    <div class="tile">
+      <button data-like="${i}" aria-pressed="false"><img src="${esc(T[i].img)}" alt=""><b>${esc(T[i].t)}</b><span>${esc(T[i].a)}</span></button>
+      <button data-play="${i}" aria-pressed="false">▶ 미리듣기</button>
+    </div>`).join("");
+}
+$("tiles").addEventListener("click", e => {
+  const b = e.target.closest("[data-like]");
+  if (b) b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") !== "true");
+});
+$("done").onclick = () => {
+  picks = [...document.querySelectorAll('[data-like][aria-pressed="true"]')].map(b => +b.dataset.like);
+  audio.pause(); $("grid").hidden = true;
+  showResult();
+};
+$("start").onclick = $("retry").onclick = start;
+
+const KO = { pop: "팝", "k-pop": "K-pop", korean: "K-pop", "hip-hop": "힙합", "korean hip-hop": "힙합", rnb: "R&B", rock: "록", indie: "인디",
+  electronic: "일렉트로닉", latin: "라틴", jazz: "재즈", metal: "메탈", folk: "포크", classical: "클래식", punk: "펑크", soul: "소울",
+  country: "컨트리", dance: "댄스", alternative: "얼터너티브", house: "하우스", ambient: "앰비언트", "singer-songwriter": "싱어송라이터",
+  "j-pop": "J-pop", "k-indie": "K-인디", "korean indie": "K-인디", kpop: "K-pop", "korean pop": "K-pop", "k-rock": "K-록", "korean rock": "K-록",
+  "k-rnb": "K-R&B", krnb: "K-R&B", "k-rap": "K-힙합", "korean rap": "K-힙합", khh: "K-힙합", "k-ballad": "발라드", "korean ballad": "발라드",
+  trot: "트로트", "k-folk": "K-포크", "k-chart": "가요" };
+const cname = c => [...new Set(DATA.clusters[c].split(" · ").map(s => KO[s] || s))].join(" · ");
+
+// 취향 별자리: 옛 성도(星圖) 인쇄물 느낌 — 먹색 바탕, 종이색 별, 장르 구역은 점선 원, 내 별자리만 주홍
+function drawMap(wins, animate) {
+  const PAPER = "243,236,220", ACCENT = "#e5482f";
+  const cv = $("map"), tip = $("tip"), dpr = Math.min(window.devicePixelRatio || 1, 2), W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  const g = cv.getContext("2d"), P = 40, u = W / 600;
+  g.scale(dpr, dpr);
+  const px = t => [P + t.x * (W - 2 * P), P + t.y * (H - 2 * P)];
+  const zones = DATA.clusters.map((_, c) => {
+    const m = T.filter(t => t.c === c).map(px);
+    return m.length ? { c, x: mean(m.map(p => p[0])), y: mean(m.map(p => p[1])), r: (30 + Math.sqrt(m.length) * 5) * u } : null;
+  }).filter(Boolean);
+  // 별자리 경로: 가장 왼쪽 별에서 시작해 가장 가까운 별로 이어감
+  const left = wins.map(i => px(T[i])).sort((a, b) => a[0] - b[0]), path = [left.shift()];
+  while (left.length) {
+    const [x, y] = path[path.length - 1];
+    left.sort((a, b) => Math.hypot(a[0] - x, a[1] - y) - Math.hypot(b[0] - x, b[1] - y));
+    path.push(left.shift());
+  }
+  let seed = 7;
+  const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+  const dust = Array.from({ length: 70 }, () => [rnd() * W, rnd() * H, rnd() * .8 + .3, rnd() * .25 + .08]);
+  const font = px => `700 ${px}px "IBM Plex Sans KR","Malgun Gothic",sans-serif`;
+
+  function frame(k) {                         // k: 별자리가 그려진 정도 0~1
+    g.setLineDash([]);
+    g.fillStyle = "#17150f"; g.fillRect(0, 0, W, H);
+    // 성도 눈금: 동심원 + 십자선
+    g.strokeStyle = `rgba(${PAPER},.10)`; g.lineWidth = 1;
+    for (let r = 70 * u; r < W; r += 70 * u) { g.beginPath(); g.arc(W / 2, H / 2, r, 0, 7); g.stroke(); }
+    g.beginPath(); g.moveTo(W / 2, 0); g.lineTo(W / 2, H); g.moveTo(0, H / 2); g.lineTo(W, H / 2); g.stroke();
+    dust.forEach(([x, y, r, a]) => { g.fillStyle = `rgba(${PAPER},${a})`; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); });
+    // 장르 구역
+    g.setLineDash([3, 5]); g.strokeStyle = `rgba(${PAPER},.28)`;
+    zones.forEach(n => { g.beginPath(); g.arc(n.x, n.y, n.r, 0, 7); g.stroke(); });
+    g.setLineDash([]);
+    T.forEach(t => { g.fillStyle = `rgba(${PAPER},.8)`; g.beginPath(); g.arc(...px(t), (.7 + t.ax[1] * 1.2) * u, 0, 7); g.fill(); });
+    g.font = font(Math.max(11, 12 * u)); g.textAlign = "center";
+    zones.forEach(n => {
+      const label = cname(n.c).split(" · ")[0], w = g.measureText(label).width + 10;
+      g.fillStyle = "#17150f"; g.fillRect(n.x - w / 2, n.y - n.r - 9 * u, w, 16 * u);   // 점선 위에 글자가 읽히도록 바탕을 지움
+      g.fillStyle = `rgba(${PAPER},.85)`; g.fillText(label, n.x, n.y - n.r + 4 * u);
+    });
+
+    const reach = k * (path.length - 1);      // 선이 도달한 지점 (별 인덱스 단위)
+    g.strokeStyle = ACCENT; g.lineWidth = 1.8 * u; g.lineJoin = "round";
+    g.beginPath(); g.moveTo(...path[0]);
+    for (let i = 1; i < path.length && i - 1 < reach; i++) {
+      const f = Math.min(1, reach - (i - 1)), [ax, ay] = path[i - 1], [bx, by] = path[i];
+      g.lineTo(ax + (bx - ax) * f, ay + (by - ay) * f);
+    }
+    g.stroke();
+    path.forEach(([x, y], i) => {             // 네 꼭지 별
+      if (i > reach + 1e-9) return;
+      g.beginPath();
+      for (let j = 0; j < 8; j++) { const r = (j % 2 ? 3.2 : 10) * u, a = j * Math.PI / 4 - Math.PI / 2; g.lineTo(x + r * Math.cos(a), y + r * Math.sin(a)); }
+      g.closePath(); g.fillStyle = `rgb(${PAPER})`; g.fill(); g.strokeStyle = ACCENT; g.lineWidth = 1.5 * u; g.stroke();
+    });
+    g.font = font(Math.max(9, 10 * u)); g.textAlign = "left"; g.fillStyle = ACCENT;
+    g.fillText("MY CONSTELLATION", 14 * u, 22 * u);
+    g.textAlign = "right"; g.fillStyle = `rgba(${PAPER},.6)`;
+    g.fillText(`${path.length} STARS`, W - 14 * u, H - 14 * u);
+  }
+  if (animate && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const t0 = performance.now();
+    (function tick(now) { const k = Math.min(1, (now - t0) / 1800); frame(k); if (k < 1) requestAnimationFrame(tick); })(t0);
+  } else frame(1);
+
+  cv.onpointerdown = cv.onpointermove = e => {  // 가까운 별의 곡 이름 표시 (내가 고른 별 우선)
+    const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    let best = null, bd = 22;
+    T.forEach((t, i) => { const [tx, ty] = px(t), d = Math.hypot(tx - x, ty - y) - (wins.includes(i) ? 10 : 0); if (d < bd) { bd = d; best = t; } });
+    tip.hidden = !best;
+    if (best) { const [tx, ty] = px(best); tip.textContent = `${best.t} · ${best.a}`; tip.style.left = Math.max(70, Math.min(W - 70, tx)) + "px"; tip.style.top = Math.max(34, ty) + "px"; }
+  };
+  cv.onpointerleave = () => tip.hidden = true;
+}
+
+function showResult() {
+  $("battle").hidden = true; $("result").hidden = false;
+  const sc = score(rounds, picks.length / tiles.length), on = bits(sc), wins = [...rounds.map(r => r[0]), ...picks], me = centroid(wins);
+  $("typeName").textContent = typeName(sc);
+  $("typeDesc").textContent = typeDesc(sc);
+  // 판정 근거: 판정된 쪽을 실제로 몇 번 골랐는지
+  const why = k => k === 3 ? `마지막 질문에서 장르 ${tiles.length}개 중 ${picks.length}곡을 골랐어요`
+    : `대결 ${rounds.length}번 중 ${rounds.filter(([w, l]) => (T[w].ax[k] > T[l].ax[k]) == on[k]).length}번 ${WHY[k][on[k]]} 곡을 골랐어요`
+      + (k === 2 ? ` · 고른 곡 평균 ${Math.round(mean(wins.map(i => T[i].yr)))}년` : "");
+  $("axes").innerHTML = AXES.map(([lo, hi], k) => `<div class="axis"><span class="${on[k] ? "" : "on"}">${lo}</span>
+    <div><i style="left:${sc[k] * 100}%"></i></div><span class="${on[k] ? "on" : ""}">${hi}</span></div><p class="why">${why(k)}</p>`).join("");
+
+  const byArtist = {};
+  T.forEach(t => (byArtist[t.a] ||= []).push(dot(t.v, me)));
+  const artists = Object.entries(byArtist).map(([a, xs]) => [mean(xs), a]).sort((x, y) => y[0] - x[0]).slice(0, 5).map(x => x[1]);
+  $("artists").innerHTML = artists.map(a => `<span>${esc(a)}</span>`).join("");
+  // ponytail: '잘 맞는 유형'은 소리 취향(형용 부분)이 같고 폭만 다른 유형으로 정한 규칙 — 궁합 데이터가 쌓이면 실제 궁합 점수 평균으로 교체
+  const other = ks => typeName(on.map((b, k) => ks.includes(k) ? 1 - b : b));
+  $("kin").innerHTML = `<div><small>잘 맞는 유형</small><b>${other([3])}</b><span>끌리는 소리는 같고 듣는 폭이 달라서 서로 새 곡을 알려줄 수 있어요</span></div>
+    <div><small>정반대 유형</small><b>${other([0, 1, 2, 3])}</b><span>네 축이 모두 반대예요. 플레이리스트를 바꿔 들으면 가장 낯선 세계가 열려요</span></div>`;
+  last = { sc, on, wins, artists };
+
+  if (friend) {  // ponytail: 궁합 = 취향 벡터 유사도 60% + 축 점수 일치도 40%, 가중치는 임의값
+    const fs = score(friend.rounds, friend.frac), sim = Math.max(0, cos(me, centroid([...friend.rounds.map(r => r[0]), ...friend.likes])));
+    const pctv = Math.round(100 * (0.6 * sim + 0.4 * (1 - mean(sc.map((x, k) => Math.abs(x - fs[k]))))));
+    $("compat").hidden = false;
+    $("compat").innerHTML = `친구(${esc(typeName(fs))})와의 취향 궁합<b>${pctv}%</b>`;
+  }
+
+  const cnt = {};
+  wins.forEach(i => cnt[T[i].c] = (cnt[T[i].c] || 0) + 1);
+  $("zone").innerHTML = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c, n]) => `<span>${esc(cname(c))} ${n}곡</span>`).join("");
+  drawMap(wins, true);
+  window.onresize = () => drawMap(wins, false);
+
+  const seen = new Set([...rounds.flat(), ...tiles]), perArtist = {};
+  $("recs").innerHTML = T.map((t, i) => [dot(t.v, me), i]).filter(([, i]) => !seen.has(i)).sort((a, b) => b[0] - a[0])
+    .filter(([, i]) => (perArtist[T[i].a] = (perArtist[T[i].a] || 0) + 1) <= 2)   // 한 아티스트가 목록을 채우지 않게 2곡까지
+    .slice(0, 20).map(([, i]) => `
+    <div class="rec"><img src="${esc(T[i].img)}" alt="">
+      <div><b>${esc(T[i].t)}</b><span>${esc(T[i].a)}</span><a href="${esc(T[i].u)}" target="_blank" rel="noopener">Apple Music에서 듣기</a></div>
+      <button data-play="${i}" aria-pressed="false">▶ 미리듣기</button></div>`).join("");
+}
+
+$("playAll").onclick = () => { queue = [...$("recs").querySelectorAll("[data-play]")]; audio.pause(); toggle(queue.shift()); };
+
+// 결과 이미지 카드(1080×1920, 스토리 비율). 앨범 표지는 다른 출처 이미지라 캔버스에 그리면 저장이 막혀서 넣지 않음
+async function drawCard() {
+  const W = 1080, H = 1920, PAPER = "#f3ecdc", INK = "#191713", ACCENT = "#e5482f", DIM = "#6d665a";
+  const SANS = '"IBM Plex Sans KR","Malgun Gothic",sans-serif', SERIF = '"Noto Serif KR","Batang",serif';
+  await Promise.all([document.fonts.load(`900 90px ${SERIF}`, "가"), document.fonts.load(`700 30px ${SANS}`, "가")]).catch(() => {});
+  drawMap(last.wins, false);  // 애니메이션 도중이어도 완성된 별자리를 담도록
+  const cv = document.createElement("canvas"), g = cv.getContext("2d");
+  cv.width = W; cv.height = H;
+  const fit = (text, font, size, max) => { do g.font = `${font} ${size}px ${font.includes("900") ? SERIF : SANS}`; while (g.measureText(text).width > max && --size > 20); };
+  g.fillStyle = PAPER; g.fillRect(0, 0, W, H);
+  g.strokeStyle = INK; g.lineWidth = 6; g.strokeRect(40, 40, W - 80, H - 80);
+  g.fillStyle = ACCENT; g.fillRect(90, 108, 26, 26);
+  g.fillStyle = INK; g.font = `700 30px ${SANS}`; g.textBaseline = "middle"; g.fillText("MUSIC TASTE TEST", 134, 122);
+
+  g.fillStyle = ACCENT; g.fillRect(102, 192, 900, 400);                    // 하드 섀도
+  g.fillStyle = INK; g.fillRect(90, 180, 900, 400);
+  g.textAlign = "center";
+  g.fillStyle = ACCENT; g.font = `700 26px ${SANS}`; g.fillText("YOUR MUSIC TASTE TYPE", W / 2, 250);
+  g.fillStyle = PAPER; fit($("typeName").textContent, "900", 96, 820); g.fillText($("typeName").textContent, W / 2, 350);
+  g.fillStyle = "#cfc7b4"; g.font = `400 30px ${SANS}`;
+  const words = $("typeDesc").textContent.split(" "), lines = [""];
+  words.forEach(w => g.measureText(lines.at(-1) + " " + w).width > 800 ? lines.push(w) : lines[lines.length - 1] += (lines.at(-1) ? " " : "") + w);
+  lines.forEach((l, i) => g.fillText(l, W / 2, 450 + i * 44));
+
+  AXES.forEach(([lo, hi], k) => {
+    const y = 690 + k * 78, x0 = 250, x1 = W - 250, x = x0 + (x1 - x0) * last.sc[k];
+    g.font = `${last.on[k] ? 400 : 700} 34px ${SANS}`; g.fillStyle = last.on[k] ? DIM : INK; g.textAlign = "left"; g.fillText(lo, 100, y);
+    g.font = `${last.on[k] ? 700 : 400} 34px ${SANS}`; g.fillStyle = last.on[k] ? INK : DIM; g.textAlign = "right"; g.fillText(hi, W - 100, y);
+    g.fillStyle = INK; g.fillRect(x0, y - 2, x1 - x0, 4);
+    g.save(); g.translate(x, y); g.rotate(Math.PI / 4); g.fillStyle = ACCENT; g.fillRect(-14, -14, 28, 28); g.strokeStyle = INK; g.lineWidth = 4; g.strokeRect(-14, -14, 28, 28); g.restore();
+  });
+
+  g.fillStyle = INK; g.fillRect(102, 1012, 900, 675);
+  g.drawImage($("map"), 90, 1000, 900, 675);
+  g.strokeStyle = INK; g.lineWidth = 6; g.strokeRect(90, 1000, 900, 675);
+  g.textAlign = "center"; g.fillStyle = INK;
+  const names = "닮은 아티스트 · " + last.artists.slice(0, 3).join(", ");
+  fit(names, "700", 32, 880); g.fillText(names, W / 2, 1760);
+  g.fillStyle = DIM; g.font = `400 28px ${SANS}`; g.fillText("곡 대결 12번으로 알아보는 내 음악 취향", W / 2, 1822);
+  return cv;
+}
+$("save").onclick = async () => {
+  (await drawCard()).toBlob(async blob => {
+    const file = new File([blob], "music-taste.png", { type: "image/png" });
+    if (matchMedia("(pointer: coarse)").matches && navigator.canShare?.({ files: [file] })) {  // 휴대폰: 공유 시트에서 사진 저장·스토리 올리기
+      try { return await navigator.share({ files: [file] }); } catch (e) { if (e.name === "AbortError") return; }
+    }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = file.name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+};
+
+$("share").onclick = async () => {
+  const url = location.origin + location.pathname + "?f=" + rounds.map(r => r.join("-")).join(".") + "~" + tiles.length + "~" + picks.join(".");
+  const text = `내 음악 취향 유형은 "${$("typeName").textContent}"! 너도 해보고 궁합 보자`;
+  try {
+    if (navigator.share) await navigator.share({ title: document.title, text, url });
+    else { await navigator.clipboard.writeText(text + " " + url); $("share").textContent = "링크를 복사했어요"; }
+  } catch (e) { /* 공유 취소 */ }
+};
+</script>
+</body>
+</html>

@@ -211,14 +211,16 @@ function toggle(btn) {
 }
 document.addEventListener("click", e => { const b = e.target.closest("[data-play]"); if (b) { queue = []; toggle(b); } });
 
-// ponytail: 무작위 40쌍 중 '소리는 비슷한데 목표 축에서 가장 다른' 쌍을 고르는 단순 휴리스틱 — 정보이득 기반 적응형 출제로 올릴 수 있음
+// 무작위 40쌍 중 목표 축에서 가장 다른 쌍. 예전엔 소리 유사도를 더했는데, 시뮬레이션에서 그 항이 축 차이를 상쇄해
+// 무작위 출제와 정확도가 같았다(analysis/README.md) → 축 차이만 씀
+// ponytail: 정보이득 기반 적응형 출제로 올릴 수 있음
 function nextPair() {
   const axis = rounds.length % 3;
   let best, bestScore = -Infinity;
   for (let n = 0; n < 40; n++) {
     const a = pool[Math.random() * pool.length | 0], b = pool[Math.random() * pool.length | 0];
     if (a === b) continue;
-    const sc = Math.abs(T[a].ax[axis] - T[b].ax[axis]) + dot(T[a].v, T[b].v);
+    const sc = Math.abs(T[a].ax[axis] - T[b].ax[axis]);
     if (sc > bestScore) { bestScore = sc; best = [a, b]; }
   }
   pool = pool.filter(i => !best.includes(i));

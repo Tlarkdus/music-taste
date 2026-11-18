@@ -27,9 +27,9 @@ USERS = 400 if QUICK else 2000
 
 # ---------- 페이지 로직 이식 ----------
 
-def next_pair(pool, axis, rng, smart=True):
-    """index.html nextPair(): 무작위 40쌍 중 |목표 축 차이| + 소리 유사도가 가장 큰 쌍.
-    smart: True = 페이지 그대로, False = 아무 쌍, "axis" = 목표 축 차이만 (비교용)"""
+def next_pair(pool, axis, rng, smart="axis"):
+    """index.html nextPair(): 무작위 40쌍 중 |목표 축 차이|가 가장 큰 쌍.
+    smart: "axis" = 현재 페이지(2026-11-18부터), True = 예전 페이지(축 차이 + 소리 유사도), False = 아무 쌍"""
     a = pool[rng.integers(len(pool), size=40)]
     b = pool[rng.integers(len(pool), size=40)]
     ok = a != b
@@ -64,7 +64,7 @@ def utility(u, idx, beta, genre):
     return beta * (AX[idx] - 0.5) @ (2 * u["theta"] - 1) + genre * V[idx] @ u["g"]
 
 
-def take_test(u, rng, beta=4.0, genre=1.0, rounds_n=ROUNDS, smart=True):
+def take_test(u, rng, beta=4.0, genre=1.0, rounds_n=ROUNDS, smart="axis"):
     pool = np.arange(N)
     rounds = []
     for r in range(rounds_n):
@@ -86,7 +86,7 @@ def truth(u):
 
 # ---------- 실험 ----------
 
-def run(beta=4.0, genre=1.0, rounds_n=ROUNDS, smart=True, users=USERS, seed=0):
+def run(beta=4.0, genre=1.0, rounds_n=ROUNDS, smart="axis", users=USERS, seed=0):
     rng = np.random.default_rng(seed)
     hit, margin, retest, full = [], [], [], []
     for _ in range(users):
@@ -131,7 +131,7 @@ if __name__ == "__main__":
         print(f"  {n:>2}회: {r['axis_acc'][:3].mean():.3f}  재검사 {r['retest']:.2f}")
 
     print("\n[4] 출제 방식 비교 (β=4, 12회)")
-    for smart, label in ((True, "현재(축 차이+소리 유사도)"), ("axis", "축 차이만"), (False, "무작위 쌍")):
+    for smart, label in (("axis", "현재: 축 차이만"), (True, "예전: 축 차이+소리 유사도"), (False, "무작위 쌍")):
         r = run(smart=smart)
         print(f"  {label:<16}: 소리 축 {fmt(r['axis_acc'][:3])} 평균 {r['axis_acc'][:3].mean():.3f}"
               f"  유형 {r['type_acc']:.2f}  재검사 {r['retest']:.2f}")
